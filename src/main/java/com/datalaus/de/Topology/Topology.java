@@ -13,8 +13,7 @@ import backtype.storm.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datalaus.de.bolts.WordCounterBolt;
-import com.datalaus.de.bolts.WordSplitterBolt;
+import com.datalaus.de.bolts.*;
 import com.datalaus.de.spouts.TwitterSpout;
 import com.datalaus.de.utils.Constants;
 
@@ -30,7 +29,7 @@ public class Topology implements Serializable {
 
 			TopologyBuilder topologyBuilder = new TopologyBuilder();
 			topologyBuilder.setSpout("twitterspout", new TwitterSpout(),1);
-			//
+			topologyBuilder.setBolt("DisplayBolt", new DisplayBolt()).shuffleGrouping("twitterspout");
 			topologyBuilder.setBolt("WordSplitterBolt", new WordSplitterBolt(5)).shuffleGrouping("twitterspout");
 			topologyBuilder.setBolt("WordCounterBolt", new WordCounterBolt(10, 5 * 60, 50)).shuffleGrouping("WordSplitterBolt");
 			
