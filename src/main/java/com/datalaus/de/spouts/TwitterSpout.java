@@ -84,7 +84,7 @@ public class TwitterSpout extends BaseRichSpout {
 		FilterQuery tweetFilterQuery = new FilterQuery(); 
 	    //tweetFilterQuery.language(new String[]{"en"});
 		/*
-	    String[] keywords = { "JianLee" };
+	    String[] keywords = { "Sochi","Ukraine","JianLee" };
 	    tweetFilterQuery.track(keywords);
 	    */
 	    tweetFilterQuery.follow(new long[] { 739682825863995393L });

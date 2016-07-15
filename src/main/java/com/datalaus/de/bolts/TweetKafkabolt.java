@@ -28,7 +28,6 @@ public class TweetKafkabolt extends BaseRichBolt{
 
     @Override
     public void execute(Tuple tuple) {
-    	   statusqueue.offer(tuple);
     	  String ret = tuple.getString(0);
     	   _collector.emit(new Values(ret));
            logger.info("\n\n");
