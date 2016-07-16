@@ -1,6 +1,5 @@
 package com.datalaus.de.Topology;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.Properties;
 import java.util.UUID;
@@ -18,13 +17,13 @@ import storm.kafka.KafkaSpout;
 import storm.kafka.SpoutConfig;
 import storm.kafka.StringScheme;
 import storm.kafka.ZkHosts;
-import twitter4j.conf.ConfigurationBuilder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datalaus.de.bolts.*;
-import com.datalaus.de.spouts.TwitterSpout;
+import com.datalaus.de.bolts.WordCounterBolt;
+import com.datalaus.de.bolts.WordSplitterBolt;
+import com.datalaus.de.bolts.TweetKafkabolt;
 import com.datalaus.de.utils.Constants;
 
 public class Topology implements Serializable {
@@ -33,28 +32,31 @@ public class Topology implements Serializable {
 	
 	public static final void main(final String[] args) {
 		try {
-			final Properties properties = new Properties();
-			final Config config = new Config();
 			
+			Properties topologyConfig = null;
+			final Config config = new Config();
 			config.setMessageTimeoutSecs(20);
+
 			TopologyBuilder topologyBuilder = new TopologyBuilder();
 			
-		    
-		    String zkConnString = properties.getProperty("zookeeper");
-		    String topicName = "tweets";
-			BrokerHosts hosts = new ZkHosts("localhost:2181");
+			String configFileLocation = "./config.properties";
+		    topologyConfig = new Properties();
+		    topologyConfig.load(ClassLoader.getSystemResourceAsStream(configFileLocation));
+		    String zkConnString = topologyConfig.getProperty("zookeeper");
+		    String topicName = topologyConfig.getProperty("topic");
+			BrokerHosts hosts = new ZkHosts(zkConnString);
 			SpoutConfig spoutConfig = new SpoutConfig(hosts, topicName, "/" + topicName, UUID.randomUUID().toString());
 			spoutConfig.scheme = new SchemeAsMultiScheme(new StringScheme());
 			KafkaSpout kafkaSpout = new KafkaSpout(spoutConfig);
 
 		    // attach the tweet spout to the topology - parallelism of 1
 			topologyBuilder.setSpout("kafka-tweet-spout", kafkaSpout, 1);
-
-			//topologyBuilder.setSpout("twitterspout", new TwitterSpout(),1);
+			
+			
+			//topologyBuilder.setBolt("DisplayBolt", new DisplayBolt()).shuffleGrouping("twitterspout");
 			topologyBuilder.setBolt("tweet-original", new TweetKafkabolt(),1).shuffleGrouping("kafka-tweet-spout");
-			topologyBuilder.setBolt("DisplayBolt", new DisplayBolt()).shuffleGrouping("tweet-original");
 			topologyBuilder.setBolt("WordSplitterBolt", new WordSplitterBolt(5)).shuffleGrouping("tweet-original");
-			topologyBuilder.setBolt("WordCounterBolt", new WordCounterBolt(10, 5 * 60, 50)).shuffleGrouping("WordSplitterBolt");
+			//topologyBuilder.setBolt("WordCounterBolt", new WordCounterBolt(10, 5 * 60, 50)).shuffleGrouping("WordSplitterBolt");
 			
 			//Submit it to the cluster or  locally
 			if (null != args && 0 < args.length) {

@@ -27,8 +27,9 @@ public class DisplayBolt implements IRichBolt {
 
     @Override
     public void execute(Tuple tuple) {
-    	  String text = (String) tuple.getValueByField("tweet");
+    	  Status tweet = (Status) tuple.getValueByField("tweet");
          
+          String text = tweet.getText();
            _collector.emit(new Values(text));
            logger.info("\n\n");
            logger.info(text);

@@ -18,7 +18,6 @@ import backtype.storm.utils.Utils;
 
 public class TweetKafkabolt extends BaseRichBolt{
     OutputCollector _collector;
-    LinkedBlockingQueue<Status> statusqueue = new LinkedBlockingQueue<Status>();
     private static final Logger logger = LoggerFactory.getLogger(TweetKafkabolt.class);
     
     @Override
