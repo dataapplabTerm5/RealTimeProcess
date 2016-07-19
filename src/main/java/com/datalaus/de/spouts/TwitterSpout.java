@@ -14,13 +14,6 @@ import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
 import backtype.storm.utils.Utils;
 import twitter4j.conf.ConfigurationBuilder;
-import twitter4j.FilterQuery;
-import twitter4j.TwitterStream;
-import twitter4j.TwitterStreamFactory;
-import twitter4j.Status;
-import twitter4j.StatusDeletionNotice;
-import twitter4j.StatusListener;
-import twitter4j.StallWarning;
 import twitter4j.*;
 
 import com.datalaus.de.utils.Constants;
@@ -82,11 +75,7 @@ public class TwitterSpout extends BaseRichSpout {
 		twitterStream.addListener(listener);
 
 		FilterQuery tweetFilterQuery = new FilterQuery(); 
-	    //tweetFilterQuery.language(new String[]{"en"});
-		/*
-	    String[] keywords = { "JianLee" };
-	    tweetFilterQuery.track(keywords);
-	    */
+
 	    tweetFilterQuery.follow(new long[] { 739682825863995393L });
 
 		twitterStream.filter(tweetFilterQuery);
@@ -100,6 +89,7 @@ public class TwitterSpout extends BaseRichSpout {
 		if(tempst==null)
 			Utils.sleep(50);
 		else
+			System.out.println(tempst);
 			coll.emit(new Values(tempst));
 	}
 

@@ -31,22 +31,20 @@ public class WordSplitterBolt extends BaseRichBolt {
 
     @Override
     public void execute(Tuple input) {
-       /*
-    	Status tweet = (Status) input.getValueByField("tweet");
-        String lang = tweet.getUser().getLang();
-        String text = tweet.getText().replaceAll("\\p{Punct}", " ").replaceAll("\\r|\\n", "").toLowerCase();
-        */
+        //Status tweet = (Status) input.getValueByField("tweet");
+       // String lang = tweet.getUser().getLang();
     	String tweet = (String) input.getValueByField("tweet");
-        String[] words = tweet.split(" ");
+        String text = tweet.replaceAll("\\p{Punct}", " ").replaceAll("\\r|\\n", "").toLowerCase();
+        String[] words = text.split(" ");
         for (String word : words) {
             if (word.length() >= minWordLength) {
-                collector.emit(new Values(word));
+                collector.emit(new Values( word));
             }
         }
     }
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-        declarer.declare(new Fields("lang", "word"));
+        declarer.declare(new Fields( "word"));
     }
 }
