@@ -24,27 +24,27 @@ public class WordSplitterBolt extends BaseRichBolt {
         this.minWordLength = minWordLength;
     }
 
-    @Override
+ 
     public void prepare(Map map, TopologyContext topologyContext, OutputCollector collector) {
         this.collector = collector;
     }
 
-    @Override
+  
     public void execute(Tuple input) {
-        //Status tweet = (Status) input.getValueByField("tweet");
-       // String lang = tweet.getUser().getLang();
-    	String tweet = (String) input.getValueByField("tweet");
+        
+        String tweet = input.getString(0);
         String text = tweet.replaceAll("\\p{Punct}", " ").replaceAll("\\r|\\n", "").toLowerCase();
         String[] words = text.split(" ");
         for (String word : words) {
             if (word.length() >= minWordLength) {
-                collector.emit(new Values( word));
+                collector.emit(new Values(word));
+                System.out.println(word);
             }
         }
     }
 
-    @Override
+ 
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-        declarer.declare(new Fields( "word"));
+        declarer.declare(new Fields("word"));
     }
 }

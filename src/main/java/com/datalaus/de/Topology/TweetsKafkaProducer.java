@@ -1,6 +1,5 @@
 package com.datalaus.de.Topology;
 
-
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Properties;
@@ -12,6 +11,9 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 
+import com.datalaus.de.spouts.TwitterSpout;
+import com.datalaus.de.utils.Constants;
+
 import twitter4j.FilterQuery;
 import twitter4j.StallWarning;
 import twitter4j.Status;
@@ -22,35 +24,31 @@ import twitter4j.TwitterStreamFactory;
 import twitter4j.URLEntity;
 import twitter4j.conf.ConfigurationBuilder;
 
-import com.datalaus.de.spouts.TwitterSpout;
-import com.datalaus.de.utils.Constants;
-
 public class TweetsKafkaProducer extends Thread {
 	TwitterStream twitterStream;
 	StatusListener listener;
-	KafkaProducer<String, Status> producer;
+	KafkaProducer producer;
 	long uid;
 	
-	@SuppressWarnings("rawtypes")
 	public TweetsKafkaProducer(long Userid, String kafkaserver){
 		//Twitter account authentication from properties file
 		uid = Userid;
 		final Properties properties = new Properties();
-		String configFileLocation = "config.properties";
 		try {
-			properties.load(ClassLoader.getSystemResourceAsStream(configFileLocation));
+			properties.load(TwitterSpout.class.getClassLoader()
+					                .getResourceAsStream(Constants.CONFIG_PROPERTIES_FILE));
 		} catch (final IOException exception) {
-			System.out.print(exception.toString());
-			//System.exit(1);
+			//LOGGER.error(exception.toString());
+			System.exit(1);
 		}
 		
 		//build kafka producer
 		Properties props = new Properties();
-		props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+		props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaserver);
 		props.setProperty(ProducerConfig.METADATA_FETCH_TIMEOUT_CONFIG, Integer.toString(5 * 1000));
 		props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-		props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,  "org.apache.kafka.common.serialization.StringSerializer");
-		producer = new KafkaProducer<String,Status>(props);
+		props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+		producer = new KafkaProducer(props);
 		
 		//Configuring Twitter OAuth
 		final ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
@@ -66,7 +64,7 @@ public class TweetsKafkaProducer extends Thread {
 		listener = new StatusListener(){
 
 			public void onStatus(Status arg0) {
-				ProducerRecord<String, Status> data = new ProducerRecord("tweets", arg0);
+				ProducerRecord<String, String> data = new ProducerRecord("topic", arg0.getText());
 				producer.send(data);
 			}
 			//Irrelevant Functions
