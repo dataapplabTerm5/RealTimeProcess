@@ -64,7 +64,7 @@ public class TweetsKafkaProducer extends Thread {
 		listener = new StatusListener(){
 
 			public void onStatus(Status arg0) {
-				ProducerRecord<String, String> data = new ProducerRecord("topic", arg0.getText());
+				ProducerRecord<String, String> data = new ProducerRecord("topic1", arg0.getText());
 				producer.send(data);
 			}
 			//Irrelevant Functions
