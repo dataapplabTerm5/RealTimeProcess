@@ -25,14 +25,7 @@ import org.slf4j.LoggerFactory;
 import com.datalaus.de.bolts.HBaseUpdateBolt;
 import com.datalaus.de.bolts.WordCounterBolt;
 import com.datalaus.de.bolts.WordSplitterBolt;
-import com.datalaus.de.spouts.TwitterSpout;
-import com.datalaus.de.utils.Constants;
-import storm.kafka.BrokerHosts;
-import storm.kafka.KafkaSpout;
-import storm.kafka.SpoutConfig;
-import storm.kafka.StringScheme;
-import storm.kafka.ZkHosts;
-import backtype.storm.spout.SchemeAsMultiScheme;
+
 
 public class Topology implements Serializable {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Topology.class);
@@ -45,20 +38,20 @@ public class Topology implements Serializable {
 		    topologyConfig.load(ClassLoader.getSystemResourceAsStream(configFileLocation));
 			
 		    String kafkaserver = topologyConfig.getProperty("kafkaserver");
-			//start a tweetskafka producer first
-			//you need provide the user id you want to follow and kafka server to store the data
-			TweetsKafkaProducer tkProducer = new TweetsKafkaProducer(739682825863995393L,kafkaserver);
-			tkProducer.start();
-			
-			 
-			final Config config = new Config();
-			config.setMessageTimeoutSecs(20);
-
-			TopologyBuilder topologyBuilder = new TopologyBuilder();
-			
-
 		    String zkConnString = topologyConfig.getProperty("zookeeper");
 		    String topicName = topologyConfig.getProperty("topic");
+			//start a tweetskafka producer first
+			//you need provide the user id you want to follow and kafka server to store the data
+			//TweetsKafkaProducer tkProducer = new TweetsKafkaProducer(739682825863995393L,kafkaserver);
+			KafkaFileProducer fileProducer = new KafkaFileProducer(topicName,false);
+			fileProducer.start();
+			//tkProducer.start();
+			
+			final Config config = new Config();
+			config.setMessageTimeoutSecs(20);
+			TopologyBuilder topologyBuilder = new TopologyBuilder();
+
+		   
 			BrokerHosts hosts = new ZkHosts(zkConnString);
 			SpoutConfig spoutConfig = new SpoutConfig(hosts, topicName, "/" + topicName, UUID.randomUUID().toString());
 			spoutConfig.scheme = new SchemeAsMultiScheme(new StringScheme());
@@ -66,9 +59,6 @@ public class Topology implements Serializable {
 
 		    // attach the tweet spout to the topology - parallelism of 1
 			topologyBuilder.setSpout("twitterspout", kafkaSpout, 1);
-			
-//			topologyBuilder.setSpout("twitterspout", new TwitterSpout(),1);
-			//
 			topologyBuilder.setBolt("WordSplitterBolt", new WordSplitterBolt(5)).shuffleGrouping("twitterspout");
 			topologyBuilder.setBolt("WordCounterBolt", new WordCounterBolt(10, 5 * 60, 50)).shuffleGrouping("WordSplitterBolt");
 			//add hbasebolt
