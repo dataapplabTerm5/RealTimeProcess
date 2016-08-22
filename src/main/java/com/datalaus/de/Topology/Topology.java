@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 import com.datalaus.de.bolts.HBaseUpdateBolt;
 import com.datalaus.de.bolts.WordCounterBolt;
 import com.datalaus.de.bolts.WordSplitterBolt;
-
+import com.datalaus.de.bolts.RedisBolt;
 
 public class Topology implements Serializable {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Topology.class);
@@ -58,10 +58,11 @@ public class Topology implements Serializable {
 			KafkaSpout kafkaSpout = new KafkaSpout(spoutConfig);
 
 		    // attach the tweet spout to the topology - parallelism of 1
-			topologyBuilder.setSpout("twitterspout", kafkaSpout, 1);
-			topologyBuilder.setBolt("WordSplitterBolt", new WordSplitterBolt(5)).shuffleGrouping("twitterspout");
+			topologyBuilder.setSpout("batchFileSpout", kafkaSpout, 1);
+			topologyBuilder.setBolt("WordSplitterBolt", new WordSplitterBolt(5)).shuffleGrouping("batchFileSpout");
 			topologyBuilder.setBolt("WordCounterBolt", new WordCounterBolt(10, 5 * 60, 50)).shuffleGrouping("WordSplitterBolt");
 			//add hbasebolt
+			topologyBuilder.setBolt("redis", new RedisBolt()).shuffleGrouping("WordCounterBolt");
 			topologyBuilder.setBolt("HbaseBolt", HBaseUpdateBolt.make(topologyConfig)).shuffleGrouping("WordCounterBolt");
 			
 			
@@ -74,7 +75,7 @@ public class Topology implements Serializable {
 				final LocalCluster localCluster = new LocalCluster();
 				localCluster.submitTopology(TOPOLOGY_NAME, config, topologyBuilder.createTopology());
 
-				Utils.sleep(360 * 1000);
+				Utils.sleep(360 * 100);
 
 				LOGGER.info("Shutting down the cluster");
 				localCluster.killTopology(TOPOLOGY_NAME);

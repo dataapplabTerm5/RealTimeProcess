@@ -20,7 +20,7 @@ public class KafkaFileProducer extends Thread {
 
     private static final String topicName
             = "topic1";
-    public static final String fileName = "./demo.txt";
+    public static final String fileName = "./demo2.txt";
 
     private final KafkaProducer<String, String> producer;
     private final Boolean isAsync;
